@@ -1,0 +1,42 @@
+#!/usr/bin/python
+#*-* encoding:utf8 *-*
+
+#
+import urllib2
+from bs4 import BeautifulSoup
+
+#
+url1 = "http://www.legifrance.gouv.fr/Droit-francais/Constitution/Declaration-des-Droits-de-l-Homme-et-du-Citoyen-de-1789"
+file1 = "/tmp/ddhc.html"
+
+#
+#htmlDoc = urllib2.urlopen(url1).read()
+htmlDoc = open(file1, 'r').read()
+
+soup = BeautifulSoup(htmlDoc)
+
+listeArticles = soup.find("div", {"class" : "content-article"}).find_all("p")
+
+i = -2
+for art in listeArticles :
+	i += 1
+
+	try:
+		titre = art.find("strong").text.rstrip().replace(".", "").replace(' ', '_')
+	except:
+		print(art)
+		print("")
+		continue
+	try:
+		corps = (art.contents[1].rstrip() + "\n")
+	
+		fart = open(str(i).zfill(2) + "." + titre, 'w')
+		fart.write(corps.encode("utf8"))
+		fart.close()
+	except:
+		print(titre.encode("utf8"))
+		print("")
+		continue
+	
+
+

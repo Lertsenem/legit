@@ -1,0 +1,42 @@
+#!/usr/bin/python
+#*-* encoding:utf8 *-*
+
+#
+import urllib2
+from bs4 import BeautifulSoup
+
+#
+url1 = "http://www.legifrance.gouv.fr/affichTexte.do?cidTexte=LEGITEXT000006071194"
+file1 = "/tmp/constitution.html"
+
+#
+#htmlDoc = urllib2.urlopen(url1).read()
+htmlDoc = open(file1, 'r').read()
+
+soup = BeautifulSoup(htmlDoc)
+
+listeArticles = soup.find_all("div", {"class" : "article"})
+
+i = -1
+for art in listeArticles :
+	i += 1
+
+	try:
+		titre=(art.find("div", {"class" : "titreArt"})).contents[0].rstrip().replace(' ', '_')
+	except:
+		print(art)
+		print("")
+		continue
+	try:
+		corps=reduce(lambda x,y: x + "\n" + y, map( lambda x: x.text.rstrip(), art.find_all("p")))
+	
+		fart = open(str(i).zfill(3) + "." + titre, 'w')
+		fart.write(corps.encode("utf8"))
+		fart.close()
+	except:
+		print(titre.encode("utf8"))
+		print("")
+		continue
+	
+
+

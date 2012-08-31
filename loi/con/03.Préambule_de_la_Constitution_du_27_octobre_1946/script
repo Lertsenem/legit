@@ -1,0 +1,42 @@
+#!/usr/bin/python
+#*-* encoding:utf8 *-*
+
+#
+import urllib2
+from bs4 import BeautifulSoup
+
+#
+url1 = "http://www.legifrance.gouv.fr/Droit-francais/Constitution/Preambule-de-la-Constitution-du-27-octobre-1946"
+file1 = "/tmp/preamb.html"
+
+#
+#htmlDoc = urllib2.urlopen(url1).read()
+htmlDoc = open(file1, 'r').read()
+
+soup = BeautifulSoup(htmlDoc)
+
+listeArticles = soup.find("div", {"class" : "content-article"}).find_all("p")
+
+i = 0
+for art in listeArticles :
+	i += 1
+	
+	try:
+		titre = ""
+	except:
+		print(art)
+		print("")
+		continue
+	try:
+		corps = art.text[art.text.find(". ")+2:]
+	
+		fart = open(str(i).zfill(2) + "." + titre, 'w')
+		fart.write(corps.encode("utf8"))
+		fart.close()
+	except:
+		print(titre.encode("utf8"))
+		print("")
+		continue
+	
+
+
