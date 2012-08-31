@@ -33,8 +33,6 @@ legit_legifrance_sectionsMarkers  = {
 legit_legifrance_rootURL = "http://www.legifrance.gouv.fr"
 
 currentDir = ["org"]
-i = 0
-size = 4
 
 # FUNCTIONS
 ########################################
@@ -147,37 +145,43 @@ for s in rootSpanList :
 		articleListe = articleSoup.find_all("div", {"class":"article"})
 
 		for art in articleListe :
-			i += 1
-
 			# Get the title
 			try:
 				titre = (art.find("div", {"class" : "titreArt"})).contents[0].rstrip().lstrip().replace(".", "").replace(' ', '_')
-			except:
+			except Exception as ex:
 				print(art)
-				print("")
+				print(str(ex.args)
 				continue
 
 			# Get the body
 			try:
-				corps = art.find("div", {"class" : "corpsArt"}).text.rstrip().lstrip() + "\n"
-			except:
-				print(titre.encode("utf8"))
+				corps = art.find("div", {"class" : "corpsArt"}).text
+				
+				# Body treatment
+				corps = corps.rstrip().lstrip() + "\n"
+				corps = corps.replace("\n\t", "\n")
+				corps = corps.replace("\n    ", "\n")
+				corps = corps.replace("\n   ", "\n")
+				corps = corps.replace("\n  ", "\n")
+				corps = corps.replace("\n ", "\n")
+			except Exception as ex:
+				print("body error - " + titre.encode("utf8") + " : " + str(ex.args))
 				continue
 
 			# Write it out !
 			try:
-				fileName = str(i).zfill(size) + "." + titre
+				fileName = titre
 
 				fart = open(fileName, 'w')
 				fart.write(corps.encode("utf8"))
 				fart.close()
-			except:
-				print("filewrite error : " + titre.encode("utf8"))
+			except Exception as ex:
+				print("filewrite error - " + titre.encode("utf8") + " : " + str(ex.args))
 				continue
 
 			if (args.organize):
 				try:
 					_legit_import_symlink(fileName, currentDir)
-				except:
-					print("symlink error : " + titre.encode("utf8"))
+				except Exception as ex:
+					print("symlink error - " + titre.encode("utf8") + " : " + str(ex.args))
 					continue
