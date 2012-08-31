@@ -150,7 +150,7 @@ for s in rootSpanList :
 				titre = (art.find("div", {"class" : "titreArt"})).contents[0].rstrip().lstrip().replace(".", "").replace(' ', '_')
 			except Exception as ex:
 				print(art)
-				print(str(ex.args)
+				print(str(ex.args))
 				continue
 
 			# Get the body
