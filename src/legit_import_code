@@ -6,7 +6,7 @@
 # Description :	This script imports all law text from a given URL and does the necessary organization.
 #		Based on BeautifulSoup 4 python module.
 #
-# Author :	Niels Giorno	aka Lertsenem	<lertsenem@yahoo.fr>
+# Author :	Lertsenem	<lertsenem@yahoo.fr>
 ########################################
 
 # IMPORTS
