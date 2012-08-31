@@ -55,7 +55,7 @@ def _legit_import_mkdir(dirPathList):
 		os.mkdir(path)
 
 		# Create a file with the complete title in it.
-		ftitle = open(path + "/title")
+		ftitle = open(path + "/title", 'w')
 		ftitle.write(dirPathList[-1].encode("utf8"))
 		ftitle.close()
 
