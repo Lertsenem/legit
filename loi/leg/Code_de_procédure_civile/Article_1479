@@ -1,0 +1,1 @@
+Les délibérations du tribunal arbitral sont secrètes.
