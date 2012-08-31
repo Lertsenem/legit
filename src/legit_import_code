@@ -32,6 +32,8 @@ legit_legifrance_sectionsMarkers  = {
 
 legit_legifrance_rootURL = "http://www.legifrance.gouv.fr"
 
+legit_nametrunksize=50
+
 currentDir = ["org"]
 
 # FUNCTIONS
@@ -45,14 +47,18 @@ def _legit_import_mkdir(dirPathList):
 	"""
 	
 	try:
+		# Trunk the name if it's more than acceptable
+		if(len(dirPathList[-1]) > legit_nametrunksize) :
+			dirPathList[-1] = dirPathList[-1][:legit_nametrunksize]+"..."
+
 		path = reduce(lambda x,y: x + "/" + y, dirPathList)
 		os.mkdir(path)
 
-	# IOError mainly means too long file name.
-	except IOError:
-		dirPathList[-1] = dirPathList[-1][:200]+"..."
-		path = reduce(lambda x,y: x + "/" + y, dirPathList)
-		os.mkdir(path)
+		# Create a file with the complete title in it.
+		ftitle = open(path + "/title")
+		ftitle.write(dirPathList[-1].encode("utf8"))
+		ftitle.close()
+
 	# OSError mostly means that the file already exists
 	except OSError:
 		return
