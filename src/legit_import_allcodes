@@ -22,7 +22,7 @@ ARG_LOC_IMPORTCODESCRIPT="$2"
 _LOC_ERRFILENAME="missing"
 
 LEGIFRANCE_ROOTURL="http://www.legifrance.gouv.fr"
-LEGIFRANCE_GETCODEURL="$LEGIFRANCE_ROOTURL/afficheCode.do?"
+LEGIFRANCE_GETCODEURL="$LEGIFRANCE_ROOTURL/affichCode.do?"
 
 # FUNCTIONS
 ########################################
