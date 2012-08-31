@@ -21,7 +21,7 @@ ARG_LOC_IMPORTCODESCRIPT="$2"
 ########################################
 _LOC_ERRFILENAME="missing"
 
-LEGIFRANCE_ROOTURL="www.legifrance.gouv.fr"
+LEGIFRANCE_ROOTURL="http://www.legifrance.gouv.fr"
 LEGIFRANCE_GETCODEURL="$LEGIFRANCE_ROOTURL/afficheCode.do?"
 
 # FUNCTIONS
@@ -48,7 +48,7 @@ _legit_import_treatLine()
 	cd "$arg_codeName"
 
 	# Do the import !
-	$ARG_LOC_IMPORTCODESCRIPT "$lv_url" >> "$_LOC_ERRFILENAME"
+	python $ARG_LOC_IMPORTCODESCRIPT "$lv_url" >> "$_LOC_ERRFILENAME"
 
 	# Move up
 	cd ..
