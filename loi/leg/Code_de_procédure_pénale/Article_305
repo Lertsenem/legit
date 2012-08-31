@@ -1,0 +1,1 @@
+Le président déclare le jury définitivement constitué.
