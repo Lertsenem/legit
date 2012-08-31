@@ -16,10 +16,19 @@
 ########################################
 ARG_LOC_CODESLISTFILE="$1"
 ARG_LOC_IMPORTCODESCRIPT="$2"
+ARG_PARALLELIZE="$3"
+
+# CHECK the arguments
+[ -n "$ARG_LOC_CODESLISTFILE" ] || _usage
+[ -n "$ARG_LOC_IMPORTCODESCRIPT" ] || _usage
+[ -n "$ARG_PARALLELIZE" ] || ARG_PARALLELIZE=""
 
 # GLOBAL VARIABLES
 ########################################
 _LOC_ERRFILENAME="missing"
+
+_RV_USAGE=254
+_MSG_USAGE="$0 <CodesListFile> <ImportCodeScript> [<Parallelize>]"
 
 LEGIFRANCE_ROOTURL="http://www.legifrance.gouv.fr"
 LEGIFRANCE_GETCODEURL="$LEGIFRANCE_ROOTURL/affichCode.do?"
@@ -27,6 +36,51 @@ LEGIFRANCE_GETCODEURL="$LEGIFRANCE_ROOTURL/affichCode.do?"
 # FUNCTIONS
 ########################################
 
+#
+# Description :	_exit() wrapper
+#
+# Arguments :	-
+#
+# Returns :	exits
+#
+# ======================================
+_usage()
+{
+	_exit "$_RV_USAGE" "$_MSG_USAGE"
+} # _usage
+
+#
+# Description :	Exit the program
+#
+# Arguments :	
+#
+# Returns :	exits
+#
+# ======================================
+_exit()
+{
+	# Arguments
+	local arg_rv="$1"
+	local arg_msg="$2"
+
+	# CHECK the arguments
+	[ -z "$arg_rv" ] && arg_rv=0
+
+	# Print the message
+	[ -n "$arg_msg" ] && echo "$arg_msg"
+
+	# Exit.
+	exit "$arg_rv"
+} # _exit
+
+
+#
+# Description :	
+#
+# Arguments :	
+#
+# Returns :	
+#
 # ======================================
 _legit_import_treatLine()
 {
@@ -48,7 +102,11 @@ _legit_import_treatLine()
 	cd "$arg_codeName"
 
 	# Do the import !
-	python $ARG_LOC_IMPORTCODESCRIPT "$lv_url" >> "$_LOC_ERRFILENAME"
+	if [ -n "$ARG_PARALLELIZE" ]; then
+		python $ARG_LOC_IMPORTCODESCRIPT "$lv_url" >> "$_LOC_ERRFILENAME" &
+	else
+		python $ARG_LOC_IMPORTCODESCRIPT "$lv_url" >> "$_LOC_ERRFILENAME"
+	fi
 
 	# Move up
 	cd ..
