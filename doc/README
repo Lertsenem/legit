@@ -1,0 +1,15 @@
+# LEGIT
+########################################
+
+LEGIT est un projet mêlant git à la loi française.
+
+Pour la plupart des citoyens, les mécanismes de l'écriture et
+de la promulgation des lois sont devenus obscurs, et bien que
+"nul ne soit censé ignorer la loi", la pratique s'avère très
+différente de la théorie.
+
+En utilisant un gestionnaire de version comme GIT, l'idée va
+être de refléter l'évolution des textes de loi au fil du temps
+et permettre ainsi une meilleure compréhension et une plus
+grande implication dans la vie politique législative, au
+moins des plus geeks des français.
