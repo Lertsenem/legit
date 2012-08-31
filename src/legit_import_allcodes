@@ -1,0 +1,67 @@
+#!/bin/bash
+########################################
+# Project :	LEGIT
+#
+# Description :	This script uses a file in parameter to import
+#		each and every code from the LEGIFRANCE website.
+#
+# Author :	Lertsenem	<lertsenem@yahoo.fr>
+########################################
+
+# PRELIMINARY CHECKS
+########################################
+[ -n "$2" ] || exit 1
+
+# ARGUMENTS
+########################################
+ARG_LOC_CODESLISTFILE="$1"
+ARG_LOC_IMPORTCODESCRIPT="$2"
+
+# GLOBAL VARIABLES
+########################################
+_LOC_ERRFILENAME="missing"
+
+LEGIFRANCE_ROOTURL="www.legifrance.gouv.fr"
+LEGIFRANCE_GETCODEURL="$LEGIFRANCE_ROOTURL/afficheCode.do?"
+
+# FUNCTIONS
+########################################
+
+# ======================================
+_legit_import_treatLine()
+{
+	# Arguments
+	local arg_codeID="$1"
+	local arg_codeName="$2"
+
+	# Local variables
+	local lv_url="$LEGIFRANCE_GETCODEURL"
+
+	# Create the directory
+	[ -w . ] || return 1
+	mkdir "$arg_codeName"
+
+	# Create the URL
+	lv_url="${lv_url}cidTexte=${arg_codeID}&dateTexte=$(date +%Y%m%d)"
+
+	# Go in the Code directory
+	cd "$arg_codeName"
+
+	# Do the import !
+	$ARG_LOC_IMPORTCODESCRIPT "$lv_url" >> "$_LOC_ERRFILENAME"
+
+	# Move up
+	cd ..
+
+	# OK.
+	return 0
+}
+
+# SCRIPT
+########################################
+
+while read line; do
+	_legit_import_treatLine $line
+done < "$ARG_LOC_CODESLISTFILE"
+
+exit 0

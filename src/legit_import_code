@@ -1,0 +1,181 @@
+#!/usr/bin/python
+#*-* encoding:utf8 *-*
+
+#
+import urllib2
+from bs4 import BeautifulSoup
+import os
+
+#
+urlRoot = "http://www.legifrance.gouv.fr/affichCode.do?cidTexte=LEGITEXT000006070159&dateTexte=20121016"
+
+currentDir = ["org"]
+i = 0
+
+size=3
+
+# FUNCTIONS
+def mkdir(dirPath):
+	try:
+		path = reduce(lambda x,y: x + "/" + y, dirPath)
+		os.mkdir(path)
+	except:
+		dirPath[-1] = dirPath[-1][:200]+"..."
+		path = reduce(lambda x,y: x + "/" + y, dirPath)
+		os.mkdir(path)
+
+def symlink(name, dirPath):
+	dstPath = (reduce(lambda x,y: x + "/" + y, dirPath) + "/" + name)
+	srcPath = ""
+
+	for k in dirPath:
+		srcPath += "../"
+
+	srcPath += name
+
+	os.symlink(srcPath, dstPath)
+
+# SCRIPT
+htmlRoot = urllib2.urlopen(urlRoot).read()
+
+soupRoot = BeautifulSoup(htmlRoot)
+
+listeSpan = soupRoot.find_all("span")
+
+for s in listeSpan :
+
+	if not s.has_attr("class") :
+		pass
+
+	elif "TM1Code" in s["class"] :
+		while len(currentDir) > 1:
+			currentDir.pop()
+
+		if len(currentDir) < 1:
+			raise Exception("Fatal : " + str(currentDir))
+
+		currentDir.append(s.text.rstrip().lstrip().replace(".", "").replace(" ", "_"))
+
+		mkdir(currentDir)
+
+	elif "TM2Code" in s["class"] :
+		while len(currentDir) > 2:
+			currentDir.pop()
+
+		if len(currentDir) < 2:
+			raise Exception("Fatal : " + str(currentDir))
+
+		currentDir.append(s.text.rstrip().lstrip().replace(".", "").replace(" ", "_"))
+
+		mkdir(currentDir)
+
+	elif "TM3Code" in s["class"] :
+		while len(currentDir) > 3:
+			currentDir.pop()
+
+		if len(currentDir) < 3:
+			raise Exception("Fatal : " + str(currentDir))
+
+		currentDir.append(s.text.rstrip().lstrip().replace(".", "").replace(" ", "_"))
+
+		mkdir(currentDir)
+
+	elif "TM4Code" in s["class"] :
+		while len(currentDir) > 4:
+			currentDir.pop()
+
+		if len(currentDir) < 4:
+			raise Exception("Fatal : " + str(currentDir))
+
+		currentDir.append(s.text.rstrip().lstrip().replace(".", "").replace(" ", "_"))
+
+		mkdir(currentDir)
+
+	elif "TM5Code" in s["class"] :
+		while len(currentDir) > 5:
+			currentDir.pop()
+
+		if len(currentDir) < 5:
+			raise Exception("Fatal : " + str(currentDir))
+
+		currentDir.append(s.text.rstrip().lstrip().replace(".", "").replace(" ", "_"))
+
+		mkdir(currentDir)
+
+	elif "TM6Code" in s["class"] :
+		while len(currentDir) > 6:
+			currentDir.pop()
+
+		if len(currentDir) < 6:
+			raise Exception("Fatal : " + str(currentDir))
+
+		currentDir.append(s.text.rstrip().lstrip().replace(".", "").replace(" ", "_"))
+
+		mkdir(currentDir)
+
+	elif "codeLienArt" in s["class"] :
+		htmlDoc = urllib2.urlopen("http://www.legifrance.gouv.fr/" + s.find("a")["href"]).read()
+		soup = BeautifulSoup(htmlDoc)
+
+		listeArticles = soup.find_all("div", {"class":"article"})
+
+		for art in listeArticles :
+			i += 1
+
+			try:
+				titre = (art.find("div", {"class" : "titreArt"})).contents[0].rstrip().lstrip().replace(".", "").replace(' ', '_')
+			except:
+				print(art)
+				print("")
+				continue
+
+			try:
+				corps = art.find("div", {"class" : "corpsArt"}).text.rstrip().lstrip() + "\n"
+
+				fileName = str(i).zfill(size) + "." + titre
+
+				fart = open(fileName, 'w')
+				fart.write(corps.encode("utf8"))
+				fart.close()
+
+				symlink(fileName, currentDir)
+			except:
+				print(titre.encode("utf8"))
+				continue
+
+	else:
+		pass
+		#print("Unknown class : " + s["class"])
+
+#
+#listeLiens = map(lambda x: x.find("a")["href"], soupRoot.find_all("span", {"class" : "codeLienArt"}))
+#
+#i = 0
+#for l in listeLiens :
+#	htmlDoc = urllib2.urlopen("http://www.legifrance.gouv.fr/" + l).read()
+#	soup = BeautifulSoup(htmlDoc)
+#
+#	listeArticles = soup.find_all("div", {"class":"article"})
+#
+#	for art in listeArticles :
+#		i += 1
+#
+#		try:
+#			titre = (art.find("div", {"class" : "titreArt"})).contents[0].rstrip().lstrip().replace(".", "").replace(' ', '_')
+#		except:
+#			print(art)
+#			print("")
+#			continue
+#
+#		try:
+#			corps = art.find("div", {"class" : "corpsArt"}).text.rstrip().lstrip() + "\n"
+#			fart = open(str(i).zfill(3) + "." + titre, 'w')
+#			fart.write(corps.encode("utf8"))
+#			fart.close()
+#		except:
+#			print(titre.encode("utf8"))
+#			print("")
+#			continue
+#		
+#
+#
