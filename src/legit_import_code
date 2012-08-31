@@ -1,127 +1,155 @@
 #!/usr/bin/python
 #*-* encoding:utf8 *-*
-
+########################################
+# Project :	LEGIT
 #
+# Description :	This script imports all law text from a given URL and does the necessary organization.
+#		Based on BeautifulSoup 4 python module.
+#
+# Author :	Niels Giorno	aka Lertsenem	<lertsenem@yahoo.fr>
+########################################
+
+# IMPORTS
+########################################
+import sys,os
+
 import urllib2
-from bs4 import BeautifulSoup
-import os
+import argparse
 
-#
-urlRoot = "http://www.legifrance.gouv.fr/affichCode.do?cidTexte=LEGITEXT000006070159&dateTexte=20121016"
+from bs4 import BeautifulSoup
+
+
+# GLOBAL
+########################################
+legit_legifrance_sectionsMarkers  = {
+	"TM1Code" : 1,
+	"TM2Code" : 2,
+	"TM3Code" : 3,
+	"TM4Code" : 4,
+	"TM5Code" : 5,
+	"TM6Code" : 6
+}
+
+legit_legifrance_rootURL = "http://www.legifrance.gouv.fr"
 
 currentDir = ["org"]
 i = 0
-
-size=3
+size = 4
 
 # FUNCTIONS
-def mkdir(dirPath):
+########################################
+# ======================================
+def _legit_import_mkdir(dirPathList):
+	"""Create a directory using a path given as a list of directories.
+	
+	If an exception is raised because of too long name, the name is cut at
+	200 characters. Note that for convenience this modifies the parameter.
+	"""
+	
 	try:
-		path = reduce(lambda x,y: x + "/" + y, dirPath)
-		os.mkdir(path)
-	except:
-		dirPath[-1] = dirPath[-1][:200]+"..."
-		path = reduce(lambda x,y: x + "/" + y, dirPath)
+		path = reduce(lambda x,y: x + "/" + y, dirPathList)
 		os.mkdir(path)
 
-def symlink(name, dirPath):
-	dstPath = (reduce(lambda x,y: x + "/" + y, dirPath) + "/" + name)
+	# IOError mainly means too long file name.
+	except IOError:
+		dirPathList[-1] = dirPathList[-1][:200]+"..."
+		path = reduce(lambda x,y: x + "/" + y, dirPathList)
+		os.mkdir(path)
+	# OSError mostly means that the file already exists
+	except OSError:
+		return
+
+# ======================================
+def _legit_import_symlink(name, dirPathList):
+	"""Create a symlink for a file of given name in a given subdirectory.
+
+	The subdirectory must be given as a list of directories.
+	"""
+
+	# Local variables : dstPath is the destination path for the symlink
+	dstPath = (reduce(lambda x,y: x + "/" + y, dirPathList) + "/" + name)
+	# Local variables : srcPath is the source path for the symlink (and will be completed later)
 	srcPath = ""
-
-	for k in dirPath:
+	
+	# Let's go all the way back up to the file.
+	for k in dirPathList:
 		srcPath += "../"
 
 	srcPath += name
 
+	# Symlink creation.
 	os.symlink(srcPath, dstPath)
 
+# ======================================
+def _legit_import_newSection(currentDir, level, name):
+	"""Changes the currently analyzed directory based on the level of a span marker.
+
+	The currently analyzed directory must be given as a list.
+	The level is a number : 1 is a root element, etc.
+	The span is the BeautifulSoup object associated to the marker.
+	"""
+
+	# If our current level is below the targetted one, there's something wrong.
+	if len(currentDir) < level:
+		raise Exception("Fatal : " + str(currentDir))
+
+	# Be sure to go up to the targetted level
+	while len(currentDir) > level:
+		currentDir.pop()
+
+	# Add the new section to the targeted level
+	currentDir.append(name)
+
+	return name
+
+
 # SCRIPT
-htmlRoot = urllib2.urlopen(urlRoot).read()
+########################################
+# Arguments Parsing
+parser = argparse.ArgumentParser(description='Extract raw code from a legifrance URL')
 
-soupRoot = BeautifulSoup(htmlRoot)
+parser.add_argument("url", metavar="URL", help="A legifrance URL pointing to a Code")
+parser.add_argument("--no-organization", dest="organize", action="store_false", help="Do not use the symlink-based organization")
 
-listeSpan = soupRoot.find_all("span")
+args = parser.parse_args()
 
-for s in listeSpan :
+# Create organization root directory if needed.
+if(args.organize):
+	_legit_import_mkdir(currentDir)
+
+# Go fetch that URL
+rootHTML = urllib2.urlopen(args.url).read()
+rootSoup= BeautifulSoup(rootHTML)
+rootSpanList = rootSoup.find_all("span")
+
+for s in rootSpanList :
 
 	if not s.has_attr("class") :
-		pass
+		continue
+		
+	spanName = s.text.rstrip().lstrip().replace(".", "").replace(" ", "_")
 
-	elif "TM1Code" in s["class"] :
-		while len(currentDir) > 1:
-			currentDir.pop()
+	# CHECKS whether it's a section change
+	for mark in legit_legifrance_sectionsMarkers :
+		if mark in s["class"] :
+			_legit_import_newSection(currentDir, legit_legifrance_sectionsMarkers[mark], spanName)
 
-		if len(currentDir) < 1:
-			raise Exception("Fatal : " + str(currentDir))
+			if(args.organize):
+				_legit_import_mkdir(currentDir)
 
-		currentDir.append(s.text.rstrip().lstrip().replace(".", "").replace(" ", "_"))
+			break
+	
+	# CHECKS whether it's an article !
+	if "codeLienArt" in s["class"] :
+		articleURL = legit_legifrance_rootURL + "/" + s.find("a")["href"]
+		articleHTML = urllib2.urlopen(articleURL).read()
+		articleSoup = BeautifulSoup(articleHTML)
+		articleListe = articleSoup.find_all("div", {"class":"article"})
 
-		mkdir(currentDir)
-
-	elif "TM2Code" in s["class"] :
-		while len(currentDir) > 2:
-			currentDir.pop()
-
-		if len(currentDir) < 2:
-			raise Exception("Fatal : " + str(currentDir))
-
-		currentDir.append(s.text.rstrip().lstrip().replace(".", "").replace(" ", "_"))
-
-		mkdir(currentDir)
-
-	elif "TM3Code" in s["class"] :
-		while len(currentDir) > 3:
-			currentDir.pop()
-
-		if len(currentDir) < 3:
-			raise Exception("Fatal : " + str(currentDir))
-
-		currentDir.append(s.text.rstrip().lstrip().replace(".", "").replace(" ", "_"))
-
-		mkdir(currentDir)
-
-	elif "TM4Code" in s["class"] :
-		while len(currentDir) > 4:
-			currentDir.pop()
-
-		if len(currentDir) < 4:
-			raise Exception("Fatal : " + str(currentDir))
-
-		currentDir.append(s.text.rstrip().lstrip().replace(".", "").replace(" ", "_"))
-
-		mkdir(currentDir)
-
-	elif "TM5Code" in s["class"] :
-		while len(currentDir) > 5:
-			currentDir.pop()
-
-		if len(currentDir) < 5:
-			raise Exception("Fatal : " + str(currentDir))
-
-		currentDir.append(s.text.rstrip().lstrip().replace(".", "").replace(" ", "_"))
-
-		mkdir(currentDir)
-
-	elif "TM6Code" in s["class"] :
-		while len(currentDir) > 6:
-			currentDir.pop()
-
-		if len(currentDir) < 6:
-			raise Exception("Fatal : " + str(currentDir))
-
-		currentDir.append(s.text.rstrip().lstrip().replace(".", "").replace(" ", "_"))
-
-		mkdir(currentDir)
-
-	elif "codeLienArt" in s["class"] :
-		htmlDoc = urllib2.urlopen("http://www.legifrance.gouv.fr/" + s.find("a")["href"]).read()
-		soup = BeautifulSoup(htmlDoc)
-
-		listeArticles = soup.find_all("div", {"class":"article"})
-
-		for art in listeArticles :
+		for art in articleListe :
 			i += 1
 
+			# Get the title
 			try:
 				titre = (art.find("div", {"class" : "titreArt"})).contents[0].rstrip().lstrip().replace(".", "").replace(' ', '_')
 			except:
@@ -129,53 +157,27 @@ for s in listeSpan :
 				print("")
 				continue
 
+			# Get the body
 			try:
 				corps = art.find("div", {"class" : "corpsArt"}).text.rstrip().lstrip() + "\n"
+			except:
+				print(titre.encode("utf8"))
+				continue
 
+			# Write it out !
+			try:
 				fileName = str(i).zfill(size) + "." + titre
 
 				fart = open(fileName, 'w')
 				fart.write(corps.encode("utf8"))
 				fart.close()
-
-				symlink(fileName, currentDir)
 			except:
-				print(titre.encode("utf8"))
+				print("filewrite error : " + titre.encode("utf8"))
 				continue
 
-	else:
-		pass
-		#print("Unknown class : " + s["class"])
-
-#
-#listeLiens = map(lambda x: x.find("a")["href"], soupRoot.find_all("span", {"class" : "codeLienArt"}))
-#
-#i = 0
-#for l in listeLiens :
-#	htmlDoc = urllib2.urlopen("http://www.legifrance.gouv.fr/" + l).read()
-#	soup = BeautifulSoup(htmlDoc)
-#
-#	listeArticles = soup.find_all("div", {"class":"article"})
-#
-#	for art in listeArticles :
-#		i += 1
-#
-#		try:
-#			titre = (art.find("div", {"class" : "titreArt"})).contents[0].rstrip().lstrip().replace(".", "").replace(' ', '_')
-#		except:
-#			print(art)
-#			print("")
-#			continue
-#
-#		try:
-#			corps = art.find("div", {"class" : "corpsArt"}).text.rstrip().lstrip() + "\n"
-#			fart = open(str(i).zfill(3) + "." + titre, 'w')
-#			fart.write(corps.encode("utf8"))
-#			fart.close()
-#		except:
-#			print(titre.encode("utf8"))
-#			print("")
-#			continue
-#		
-#
-#
+			if (args.organize):
+				try:
+					_legit_import_symlink(fileName, currentDir)
+				except:
+					print("symlink error : " + titre.encode("utf8"))
+					continue
